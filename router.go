@@ -1,11 +1,11 @@
 package voicebr
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"log"
 	"net/http"
-	"encoding/json"
-	"bytes"
-	"io"
 
 	"github.com/gorilla/mux"
 )
@@ -28,15 +28,15 @@ func RecordAnswerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode([]map[string]interface{}{
-		map[string]interface{}{
+		{
 			"action": "talk",
-			"text": "Hello",
+			"text":   "Hello",
 		},
-		map[string]interface{}{
-			"action": "record",
+		{
+			"action":    "record",
 			"beepStart": true,
-			"eventUrl": HostAddr+"/store/recording/event",
-			"endOnKey": 1,
+			"eventUrl":  HostAddr + "/store/recording/event",
+			"endOnKey":  1,
 		},
 	})
 }
@@ -64,9 +64,9 @@ func StoreRecordingEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	var content struct{
+	var content struct {
 		ConversationUUID string `json:"conversation_uuid"`
-		RecordingURL string `json:"recording_url"`
+		RecordingURL     string `json:"recording_url"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
