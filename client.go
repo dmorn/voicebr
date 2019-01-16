@@ -1,38 +1,38 @@
 /// Broadcast voice messages to a set of recipients.
 /// Copyright (C) 2019 Daniel Morandini (jecoz)
-/// 
+///
 /// This program is free software: you can redistribute it and/or modify
 /// it under the terms of the GNU General Public License as published by
 /// the Free Software Foundation, either version 3 of the License, or
 /// (at your option) any later version.
-/// 
+///
 /// This program is distributed in the hope that it will be useful,
 /// but WITHOUT ANY WARRANTY; without even the implied warranty of
 /// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 /// GNU General Public License for more details.
-/// 
+///
 /// You should have received a copy of the GNU General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package voicebr
 
 import (
-	"net/http"
-	"time"
-	"io"
 	"bytes"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
+	"io"
+	"net/http"
+	"time"
 )
 
 type Client struct {
 	internal *http.Client
-	AppID string
-	Number string
+	AppID    string
+	Number   string
 	HostAddr string
-	key interface{}
+	key      interface{}
 }
 
 func NewClient(pKeyR io.Reader, appID, number, hostAddr string) (*Client, error) {
@@ -48,10 +48,10 @@ func NewClient(pKeyR io.Reader, appID, number, hostAddr string) (*Client, error)
 
 	return &Client{
 		internal: http.DefaultClient,
-		AppID: appID,
-		Number: number,
+		AppID:    appID,
+		Number:   number,
 		HostAddr: hostAddr,
-		key: key,
+		key:      key,
 	}, nil
 }
 
@@ -60,11 +60,11 @@ func (c *Client) Token() (string, error) {
 		return "", fmt.Errorf("Token: found nil key. Use NewClient to create a valid Client")
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"alg": "RS256",
-		"typ": "JWT",
+		"alg":            "RS256",
+		"typ":            "JWT",
 		"application_id": c.AppID,
-		"iat": time.Now().Unix(),
-		"jti": uuid.New().String(),
+		"iat":            time.Now().Unix(),
+		"jti":            uuid.New().String(),
 	})
 
 	return token.SignedString(c.key)
@@ -88,7 +88,7 @@ func (c *Client) Do(method, url string, body io.Reader) (*http.Response, error) 
 	if err != nil {
 		fmt.Errorf("Get: unable to make request: %v", err)
 	}
-	req.Header.Set("Authorization", "Bearer " + token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	if method == "POST" {
 		req.Header.Set("Content-Type", "application/json")
@@ -104,19 +104,19 @@ func (c *Client) Do(method, url string, body io.Reader) (*http.Response, error) 
 
 func (c *Client) Call(to []*Contact, recName string) (*http.Response, error) {
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(&struct{
-		To []*Contact `json:"to"`
-		From *Contact `json:"from"`
-		Answer []string `json:"answer_url"`
-		Event []string `json:"event_url"`
+	if err := json.NewEncoder(&buf).Encode(&struct {
+		To     []*Contact `json:"to"`
+		From   *Contact   `json:"from"`
+		Answer []string   `json:"answer_url"`
+		Event  []string   `json:"event_url"`
 	}{
 		To: to,
 		From: &Contact{
-			Type: "phone",
+			Type:   "phone",
 			Number: c.Number,
 		},
 		Answer: []string{c.HostAddr + "/play/recording/" + recName},
-		Event: []string{c.HostAddr + "/play/recording/event"},
+		Event:  []string{c.HostAddr + "/play/recording/event"},
 	}); err != nil {
 		return nil, fmt.Errorf("unable to encode ncco: %v", err)
 	}
@@ -130,13 +130,13 @@ func (c *Client) Call(to []*Contact, recName string) (*http.Response, error) {
 }
 
 type Contact struct {
-	Type string `json:"type"`
+	Type   string `json:"type"`
 	Number string `json:"number"`
 }
 
 func NewContact(num string) *Contact {
 	return &Contact{
-		Type: "phone",
+		Type:   "phone",
 		Number: num,
 	}
 }
