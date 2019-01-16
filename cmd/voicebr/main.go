@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"github.com/jecoz/voicebr"
 	"log"
-	"net/http"
 	"os"
+	"net/http"
+	"github.com/jecoz/voicebr"
 )
 
 // Version and BuildTime are filled in during build by the Makefile
@@ -19,6 +19,9 @@ var (
 	port     = flag.String("port", "4001", "Server listening port")
 	hostAddr = flag.String("host.addr", "http://d1f61c3e.ngrok.io", "Canonical address of the publicly available web server")
 	rootDir  = flag.String("root.dir", "", "Storage root directory. Defaults to the current dir")
+	privateKey  = flag.String("key.pem", "private-key.pem", "Path to the private key that should be used to sign JWTs")
+	appID  = flag.String("app.id", "test123", "Nexmo's application identifier")
+	appNumber  = flag.String("app.number", "1111111111", "Nexmo's application registered number")
 )
 
 func main() {
@@ -35,7 +38,18 @@ func main() {
 		*rootDir = wd
 	}
 
-	r := voicebr.NewRouter(*rootDir, *hostAddr)
+	file, err := os.Open(*privateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	client, err := voicebr.NewClient(file, *appID, *appNumber, *hostAddr)
+	file.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	r := voicebr.NewRouter(client, *rootDir, *hostAddr)
 
 	log.Printf("%v listening on port :%s", os.Args[0], *port)
 	if err := http.ListenAndServe(":"+*port, r); err != nil {

@@ -22,7 +22,7 @@ func ensurePresent(dir string) error {
 }
 
 func (s *Store) PutRec(r io.Reader, name string) error {
-	path := filepath.Join(s.RootDir, BaseDir, RecDir)
+	path := s.RecsPath()
 	if err := ensurePresent(path); err != nil {
 		return fmt.Errorf("PutRec: unable to obtain directory: %v", err)
 	}
@@ -40,4 +40,8 @@ func (s *Store) PutRec(r io.Reader, name string) error {
 
 	log.Printf("PutRec: %d bytes written into %s", n, path)
 	return nil
+}
+
+func (s *Store) RecsPath() string {
+	return filepath.Join(s.RootDir, BaseDir, RecDir)
 }
