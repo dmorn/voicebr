@@ -20,11 +20,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"time"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 )
 
 type Client struct {
