@@ -120,6 +120,7 @@ func makeStoreRecordingEventHandler(s *Store, c *Client) http.HandlerFunc {
 				log.Printf("%v, continuing with partial data", err)
 			} else {
 				log.Println(err)
+				return
 			}
 		}
 
