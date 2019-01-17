@@ -20,11 +20,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 	"io"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 type Client struct {
@@ -102,7 +104,26 @@ func (c *Client) Do(method, url string, body io.Reader) (*http.Response, error) 
 	return resp, checkStatus(resp)
 }
 
-func (c *Client) Call(to *Contact, recName string) error {
+func (c *Client) Call(to []*Contact, recName string) {
+	sem := make(chan bool, 3) // TODO: This has to change. Max rate: 3 calls/sec
+	for _, v := range to {
+		sem <- true
+		go func(contact *Contact) {
+			defer func() { <-sem }()
+
+			log.Printf("Calling %v with rec %v", contact.Name, recName)
+			err := c.call(contact, recName)
+			if err != nil {
+				log.Printf("Call error: %v", err)
+			}
+		}(v)
+	}
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
+	}
+}
+
+func (c *Client) call(to *Contact, recName string) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(&struct {
 		To     []*Contact `json:"to"`

@@ -99,7 +99,6 @@ func makeStoreRecordingEventHandler(s *Store, c *Client) http.HandlerFunc {
 
 		// Download mp3 file with the recording. It will
 		// later be used into the outbound calls.
-
 		resp, err := c.Get(content.RecordingURL)
 		if err != nil {
 			log.Printf("RecordingEventHandler error: unable to download file: %v", err)
@@ -124,22 +123,7 @@ func makeStoreRecordingEventHandler(s *Store, c *Client) http.HandlerFunc {
 			}
 		}
 
-		sem := make(chan bool, 3) // TODO: This has to change. Max rate: 3 calls/sec
-		for _, v := range contacts {
-			sem <- true
-			go func(contact *Contact) {
-				defer func() { <-sem }()
-
-				log.Printf("Calling %v with rec %v", contact.Name, recName)
-				err := c.Call(contact, recName)
-				if err != nil {
-					log.Printf("Call error: %v", err)
-				}
-			}(v)
-		}
-		for i := 0; i < cap(sem); i++ {
-			sem <- true
-		}
+		c.Call(contacts, recName)
 	}
 }
 
