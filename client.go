@@ -20,11 +20,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"time"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 type Client struct {
@@ -102,7 +102,7 @@ func (c *Client) Do(method, url string, body io.Reader) (*http.Response, error) 
 	return resp, checkStatus(resp)
 }
 
-func (c *Client) Call(to []*Contact, recName string) (*http.Response, error) {
+func (c *Client) Call(to *Contact, recName string) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(&struct {
 		To     []*Contact `json:"to"`
@@ -110,7 +110,7 @@ func (c *Client) Call(to []*Contact, recName string) (*http.Response, error) {
 		Answer []string   `json:"answer_url"`
 		Event  []string   `json:"event_url"`
 	}{
-		To: to,
+		To: []*Contact{to},
 		From: &Contact{
 			Type:   "phone",
 			Number: c.Number,
@@ -118,27 +118,15 @@ func (c *Client) Call(to []*Contact, recName string) (*http.Response, error) {
 		Answer: []string{c.HostAddr + "/play/recording/" + recName},
 		Event:  []string{c.HostAddr + "/play/recording/event"},
 	}); err != nil {
-		return nil, fmt.Errorf("unable to encode ncco: %v", err)
+		return fmt.Errorf("unable to encode ncco: %v", err)
 	}
 
-	resp, err := c.Post("https://api.nexmo.com/v1/calls", &buf)
+	_, err := c.Post("https://api.nexmo.com/v1/calls", &buf)
 	if err != nil {
-		return nil, fmt.Errorf("unable to make call: %v", err)
+		return fmt.Errorf("unable to make call: %v", err)
 	}
 
-	return resp, nil
-}
-
-type Contact struct {
-	Type   string `json:"type"`
-	Number string `json:"number"`
-}
-
-func NewContact(num string) *Contact {
-	return &Contact{
-		Type:   "phone",
-		Number: num,
-	}
+	return nil
 }
 
 func checkStatus(resp *http.Response) error {

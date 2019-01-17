@@ -17,6 +17,8 @@
 package voicebr
 
 import (
+	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -60,4 +62,50 @@ func (s *Store) PutRec(r io.Reader, name string) error {
 
 func (s *Store) RecsPath() string {
 	return filepath.Join(s.RootDir, BaseDir, RecDir)
+}
+
+type Contact struct {
+	Name   string `json:"-"`
+	Type   string `json:"type"`
+	Number string `json:"number"`
+}
+
+func NewContact(num, name string) *Contact {
+	return &Contact{
+		Type:   "phone",
+		Number: num,
+		Name:   name,
+	}
+}
+
+func (s *Store) ContactsPath() string {
+	return filepath.Join(s.RootDir, BaseDir, "contacts.csv")
+}
+
+var ErrCorruptedContacts = errors.New("contacts file read contains corrupted data, thus the results could be partial")
+
+func (s *Store) Contacts() ([]*Contact, error) {
+	file, err := os.Open(s.ContactsPath())
+	if err != nil {
+		return nil, fmt.Errorf("Contacts: unable to open file: %v", err)
+	}
+	defer file.Close()
+
+	recs, err := csv.NewReader(file).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("Contacts: unable to read file: %v", err)
+	}
+
+	acc := make([]*Contact, 0, len(recs))
+	for _, rec := range recs {
+		if len(rec) < 2 {
+			// discard record
+			continue
+		}
+		acc = append(acc, NewContact(rec[0], rec[1]))
+	}
+	if len(acc) != len(recs) {
+		return acc, ErrCorruptedContacts
+	}
+	return acc, nil
 }

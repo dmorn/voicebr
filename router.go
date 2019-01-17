@@ -115,12 +115,31 @@ func makeStoreRecordingEventHandler(s *Store, c *Client) http.HandlerFunc {
 
 		// Make outbound phone call that will play the saved
 		// recording.
-		resp, err = c.Call([]*Contact{NewContact("393404208451")}, recName)
+		contacts, err := s.Contacts()
 		if err != nil {
-			log.Println(err)
-			return
+			if err == ErrCorruptedContacts {
+				log.Printf("%v, continuing with partial data", err)
+			} else {
+				log.Println(err)
+			}
 		}
-		resp.Body.Close()
+
+		sem := make(chan bool, 3) // TODO: This has to change. Max rate: 3 calls/sec
+		for _, v := range contacts {
+			sem <- true
+			go func(contact *Contact) {
+				defer func() { <-sem }()
+
+				log.Printf("Calling %v with rec %v", contact.Name, recName)
+				err := c.Call(contact, recName)
+				if err != nil {
+					log.Printf("Call error: %v", err)
+				}
+			}(v)
+		}
+		for i := 0; i < cap(sem); i++ {
+			sem <- true
+		}
 	}
 }
 
