@@ -111,7 +111,7 @@ func (c *Client) Call(to []*Contact, recName string) {
 		go func(contact *Contact) {
 			defer func() { <-sem }()
 
-			log.Printf("Calling %v with rec %v", contact.Name, recName)
+			log.Printf("Calling %v, message: %v", contact.Name, recName)
 			err := c.call(contact, recName)
 			if err != nil {
 				log.Printf("Call error: %v", err)
