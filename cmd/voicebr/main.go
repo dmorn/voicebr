@@ -32,12 +32,13 @@ var (
 )
 
 var (
-	port       = flag.String("port", "4001", "Server listening port")
-	hostAddr   = flag.String("host.addr", "http://d1f61c3e.ngrok.io", "Canonical address of the publicly available web server")
-	rootDir    = flag.String("root.dir", "", "Storage root directory. Defaults to the current dir")
-	privateKey = flag.String("key.pem", "private-key.pem", "Path to the private key that should be used to sign JWTs")
-	appID      = flag.String("app.id", "test123", "Nexmo's application identifier")
-	appNumber  = flag.String("app.number", "1111111111", "Nexmo's application registered number")
+	port         = flag.String("port", "4001", "Server listening port")
+	hostAddr     = flag.String("host.addr", "http://d1f61c3e.ngrok.io", "Canonical address of the publicly available web server")
+	rootDir      = flag.String("root.dir", "", "Storage root directory. Defaults to the current dir")
+	privateKey   = flag.String("key.pem", "private-key.pem", "Path to the private key that should be used to sign JWTs")
+	appID        = flag.String("app.id", "test123", "Nexmo's application identifier")
+	appNumber    = flag.String("app.number", "1111111111", "Nexmo's application registered number")
+	contactsFile = flag.String("contacts.file", "data/contacts.csv", "Name of the input contacts to use when broadcasting calls.")
 )
 
 func main() {
@@ -65,7 +66,8 @@ func main() {
 		panic(err)
 	}
 
-	r := voicebr.NewRouter(client, *rootDir, *hostAddr)
+	s := &voicebr.Store{RootDir: *rootDir, ContactsFile: *contactsFile}
+	r := voicebr.NewRouter(client, s, *hostAddr)
 
 	log.Printf("%v listening on port :%s", os.Args[0], *port)
 	if err := http.ListenAndServe(":"+*port, r); err != nil {

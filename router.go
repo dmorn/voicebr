@@ -26,11 +26,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewRouter(c *Client, rootDir, hostAddr string) *mux.Router {
-	s := &Store{
-		RootDir: rootDir,
-	}
-
+func NewRouter(c *Client, s *Store, hostAddr string) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(hostAddr))
 	r.HandleFunc("/record/voice/event", LogEventHandler)

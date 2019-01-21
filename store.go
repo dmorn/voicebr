@@ -32,7 +32,8 @@ var (
 )
 
 type Store struct {
-	RootDir string
+	RootDir      string
+	ContactsFile string
 }
 
 func ensurePresent(dir string) error {
@@ -79,7 +80,7 @@ func NewContact(num, name string) *Contact {
 }
 
 func (s *Store) ContactsPath() string {
-	return filepath.Join(s.RootDir, BaseDir, "contacts.csv")
+	return s.ContactsFile
 }
 
 var ErrCorruptedContacts = errors.New("contacts file read contains corrupted data, thus the results could be partial")
