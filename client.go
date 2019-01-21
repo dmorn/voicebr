@@ -83,12 +83,12 @@ func (c *Client) Post(url string, body io.Reader) (*http.Response, error) {
 func (c *Client) Do(method, url string, body io.Reader) (*http.Response, error) {
 	token, err := c.Token()
 	if err != nil {
-		fmt.Errorf("Get: unable to create authorization token: %v", err)
+		return nil, fmt.Errorf("Get: unable to create authorization token: %v", err)
 	}
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		fmt.Errorf("Get: unable to make request: %v", err)
+		return nil, fmt.Errorf("Get: unable to make request: %v", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 
