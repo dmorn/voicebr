@@ -42,12 +42,12 @@ type Client struct {
 func NewClient(pKeyR io.Reader, appID, number, hostAddr string) (*Client, error) {
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, pKeyR); err != nil {
-		return nil, fmt.Errorf("NewClient: unable to read private key: %v", err)
+		return nil, fmt.Errorf("new client error: unable to read private key: %v", err)
 	}
 
 	key, err := jwt.ParseRSAPrivateKeyFromPEM(buf.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("NewClient: %v", err)
+		return nil, fmt.Errorf("new client error: %v", err)
 	}
 
 	return &Client{
@@ -61,7 +61,7 @@ func NewClient(pKeyR io.Reader, appID, number, hostAddr string) (*Client, error)
 
 func (c *Client) Token() (string, error) {
 	if c.key == nil {
-		return "", fmt.Errorf("Token: found nil key. Use NewClient to create a valid Client")
+		return "", fmt.Errorf("token: found nil key. Use NewClient to create a valid Client")
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"alg":            "RS256",
@@ -85,12 +85,12 @@ func (c *Client) Post(url string, body io.Reader) (*http.Response, error) {
 func (c *Client) Do(method, url string, body io.Reader) (*http.Response, error) {
 	token, err := c.Token()
 	if err != nil {
-		return nil, fmt.Errorf("Get: unable to create authorization token: %v", err)
+		return nil, fmt.Errorf("unable to create authorization token: %v", err)
 	}
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return nil, fmt.Errorf("Get: unable to make request: %v", err)
+		return nil, fmt.Errorf("unable to make request: %v", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 
@@ -154,8 +154,12 @@ func DecodeContacts(p ContactsProvider) ([]Contact, error) {
 func (c *Client) Call(p ContactsProvider, recName string) {
 	contacts, err := DecodeContacts(p)
 	if err != nil {
-		log.Printf("Call error: %v", err)
-		return
+		if err == ErrCorruptedContacts {
+			log.Printf("Call: %v", err)
+		} else {
+			log.Printf("Call error: %v", err)
+			return
+		}
 	}
 
 	sem := make(chan bool, 3) // TODO: This has to change. Max rate: 3 calls/sec
