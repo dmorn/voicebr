@@ -17,15 +17,15 @@
 package cmd
 
 import (
-	"log"
-	"os"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/jecoz/voicebr/nexmo"
 	"github.com/jecoz/voicebr/storage"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // serverCmd represents the server command

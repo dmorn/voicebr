@@ -18,8 +18,8 @@ package nexmo
 
 import (
 	"bytes"
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -181,8 +181,8 @@ func (c *Client) call(to Contact, recName string) error {
 	if err := json.NewEncoder(&buf).Encode(&struct {
 		To     []Contact `json:"to"`
 		From   Contact   `json:"from"`
-		Answer []string   `json:"answer_url"`
-		Event  []string   `json:"event_url"`
+		Answer []string  `json:"answer_url"`
+		Event  []string  `json:"event_url"`
 	}{
 		To: []Contact{to},
 		From: Contact{

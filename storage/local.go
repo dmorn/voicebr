@@ -17,9 +17,9 @@
 package storage
 
 import (
-	"net/http"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -74,4 +74,3 @@ func (l *Local) ReadContacts(dest io.Writer) error {
 	}
 	return nil
 }
-
