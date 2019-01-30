@@ -14,7 +14,7 @@
 /// You should have received a copy of the GNU General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package voicebr
+package nexmo
 
 import (
 	"bytes"
@@ -26,14 +26,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewRouter(c *Client, s *Store, hostAddr string) *mux.Router {
+type Storage interface {
+	ContactsProvider
+	RecFileHandler() http.Handler
+	WriteRec(src io.Reader, fileName string) (string, error)
+}
+
+func NewRouter(c *Client, s Storage, hostAddr string) *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(hostAddr))
 	r.HandleFunc("/record/voice/event", LogEventHandler)
 	r.HandleFunc("/store/recording/event", makeStoreRecordingEventHandler(s, c))
 	r.HandleFunc("/play/recording/event", LogEventHandler)
 	r.HandleFunc("/play/recording/{name}", makePlayRecordingHandler(hostAddr))
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(s.RecsPath()))))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", s.RecFileHandler()))
 	r.Use(loggingMiddleware)
 
 	return r
@@ -75,7 +81,7 @@ func LogEventHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Event received: %v", buf.String())
 }
 
-func makeStoreRecordingEventHandler(s *Store, c *Client) http.HandlerFunc {
+func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			return
@@ -103,24 +109,14 @@ func makeStoreRecordingEventHandler(s *Store, c *Client) http.HandlerFunc {
 		defer resp.Body.Close()
 
 		recName := content.RecordingUUID + ".mp3"
-		if err = s.PutRec(resp.Body, recName); err != nil {
+		if _, err = s.WriteRec(resp.Body, recName); err != nil {
 			log.Println(err)
 			return
 		}
 
 		// Make outbound phone call that will play the saved
 		// recording.
-		contacts, err := s.Contacts()
-		if err != nil {
-			if err == ErrCorruptedContacts {
-				log.Printf("%v, continuing with partial data", err)
-			} else {
-				log.Println(err)
-				return
-			}
-		}
-
-		c.Call(contacts, recName)
+		c.Call(s, recName)
 	}
 }
 

@@ -14,11 +14,13 @@
 /// You should have received a copy of the GNU General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package voicebr
+package nexmo
 
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -104,11 +106,62 @@ func (c *Client) Do(method, url string, body io.Reader) (*http.Response, error) 
 	return resp, checkStatus(resp)
 }
 
-func (c *Client) Call(to []*Contact, recName string) {
+type Contact struct {
+	Name   string `json:"-"`
+	Type   string `json:"type"`
+	Number string `json:"number"`
+}
+
+func NewContact(num, name string) Contact {
+	return Contact{
+		Type:   "phone",
+		Number: num,
+		Name:   name,
+	}
+}
+
+type ContactsProvider interface {
+	ReadContacts(dest io.Writer) error
+}
+
+var ErrCorruptedContacts = errors.New("contacts file read contains corrupted data, thus the result could be partial")
+
+func DecodeContacts(p ContactsProvider) ([]Contact, error) {
+	var buf bytes.Buffer
+	if err := p.ReadContacts(&buf); err != nil {
+		return []Contact{}, err
+	}
+
+	recs, err := csv.NewReader(&buf).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("decode contacts: %v", err)
+	}
+
+	acc := make([]Contact, 0, len(recs))
+	for _, rec := range recs {
+		if len(rec) < 2 {
+			// discard record
+			continue
+		}
+		acc = append(acc, NewContact(rec[0], rec[1]))
+	}
+	if len(acc) != len(recs) {
+		return acc, ErrCorruptedContacts
+	}
+	return acc, nil
+}
+
+func (c *Client) Call(p ContactsProvider, recName string) {
+	contacts, err := DecodeContacts(p)
+	if err != nil {
+		log.Printf("Call error: %v", err)
+		return
+	}
+
 	sem := make(chan bool, 3) // TODO: This has to change. Max rate: 3 calls/sec
-	for _, v := range to {
+	for _, v := range contacts {
 		sem <- true
-		go func(contact *Contact) {
+		go func(contact Contact) {
 			defer func() { <-sem }()
 
 			log.Printf("Calling %v, message: %v", contact.Name, recName)
@@ -123,16 +176,16 @@ func (c *Client) Call(to []*Contact, recName string) {
 	}
 }
 
-func (c *Client) call(to *Contact, recName string) error {
+func (c *Client) call(to Contact, recName string) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(&struct {
-		To     []*Contact `json:"to"`
-		From   *Contact   `json:"from"`
+		To     []Contact `json:"to"`
+		From   Contact   `json:"from"`
 		Answer []string   `json:"answer_url"`
 		Event  []string   `json:"event_url"`
 	}{
-		To: []*Contact{to},
-		From: &Contact{
+		To: []Contact{to},
+		From: Contact{
 			Type:   "phone",
 			Number: c.Number,
 		},
