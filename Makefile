@@ -18,7 +18,7 @@ all: voicebr
 
 .PHONY: voicebr
 voicebr:
-	$Q go build $(if $V,-v) -o $(bind)/voicebr $(VERSION_FLAGS) $(CURDIR)/cmd/voicebr
+	$Q go build $(if $V,-v) -o $(bind)/voicebr $(VERSION_FLAGS) $(CURDIR)/main.go
 
 .PHONY: clean
 clean:
