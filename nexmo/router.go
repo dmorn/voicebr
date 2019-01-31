@@ -26,6 +26,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const recFormat = "mp3"
+
 type Storage interface {
 	ContactsProvider
 	RecFileHandler() http.Handler
@@ -57,6 +59,7 @@ func makeRecordAnswerHandler(hostAddr string) http.HandlerFunc {
 			{
 				"action":    "record",
 				"beepStart": true,
+				"format": recFormat,
 				"eventUrl":  []string{hostAddr + "/store/recording/event"},
 				"endOnKey":  1,
 			},
@@ -108,7 +111,7 @@ func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
 		}
 		defer resp.Body.Close()
 
-		recName := content.RecordingUUID + ".mp3"
+		recName := content.RecordingUUID + "." + recFormat
 		if _, err = s.WriteRec(resp.Body, recName); err != nil {
 			log.Println(err)
 			return
