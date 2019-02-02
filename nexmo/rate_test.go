@@ -2,8 +2,8 @@ package nexmo_test
 
 import (
 	"context"
-	"time"
 	"testing"
+	"time"
 
 	"github.com/jecoz/voicebr/nexmo"
 )

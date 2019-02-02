@@ -16,7 +16,7 @@ type Limiter struct {
 // with an burst of `r` and Limit of `r`.
 func NewLimiter(r int) *Limiter {
 	return &Limiter{
-		internal: rate.NewLimiter(rate.Limit(r), r),
+		internal: rate.NewLimiter(rate.Limit(r), 1),
 	}
 }
 

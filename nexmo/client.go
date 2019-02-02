@@ -33,8 +33,8 @@ import (
 )
 
 var (
-	PostLimiter = NewLimiter(3)
-	GetLimiter = NewLimiter(15)
+	CallLimiter = NewLimiter(3)
+	GetLimiter  = NewLimiter(15)
 )
 
 type Client struct {
@@ -81,7 +81,7 @@ func (c *Client) Token() (string, error) {
 }
 
 func (c *Client) Get(url string) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	if err := GetLimiter.Wait(ctx); err != nil {
@@ -91,10 +91,10 @@ func (c *Client) Get(url string) (*http.Response, error) {
 }
 
 func (c *Client) Post(url string, body io.Reader) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	if err := PostLimiter.Wait(ctx); err != nil {
+	if err := CallLimiter.Wait(ctx); err != nil {
 		return nil, fmt.Errorf("Client: unable to perform Post: %v", err)
 	}
 	return c.Do("POST", url, body)
