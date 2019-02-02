@@ -59,7 +59,7 @@ func makeRecordAnswerHandler(hostAddr string) http.HandlerFunc {
 			{
 				"action":    "record",
 				"beepStart": true,
-				"format": recFormat,
+				"format":    recFormat,
 				"eventUrl":  []string{hostAddr + "/store/recording/event"},
 				"endOnKey":  1,
 			},
