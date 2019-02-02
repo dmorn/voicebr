@@ -31,13 +31,7 @@ import (
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "start a voicebr server",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Printf("version: %s, commit: %s, built at: %s\n\n", Version, Commit, BuildTime)
 
@@ -73,9 +67,9 @@ func init() {
 	serverCmd.Flags().String("app-num", "", "Nexmo's application registered number")
 
 	serverCmd.MarkFlagRequired("host-addr")
-	serverCmd.MarkFlagRequired("private-key")
 	serverCmd.MarkFlagRequired("app-id")
 	serverCmd.MarkFlagRequired("app-num")
+	serverCmd.MarkFlagRequired("private-key")
 
 	viper.BindPFlag("port", serverCmd.Flags().Lookup("port"))
 	viper.BindPFlag("host-addr", serverCmd.Flags().Lookup("host-addr"))
