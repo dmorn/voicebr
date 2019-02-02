@@ -25,7 +25,15 @@ import (
 	"github.com/jecoz/voicebr/nexmo"
 	"github.com/jecoz/voicebr/storage"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+)
+
+var (
+	appID string
+	appNum string
+	hostAddr string
+	rootDir string
+	pKey string
+	port int
 )
 
 // serverCmd represents the server command
@@ -33,24 +41,25 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "start a voicebr server",
 	Run: func(cmd *cobra.Command, args []string) {
+		log.SetFlags(0)
 		log.Printf("version: %s, commit: %s, built at: %s\n\n", Version, Commit, BuildTime)
 
-		file, err := os.Open(viper.GetString("private-key"))
+		file, err := os.Open(pKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		client, err := nexmo.NewClient(file, viper.GetString("app-id"), viper.GetString("app-num"), viper.GetString("host-addr"))
+		client, err := nexmo.NewClient(file, appID, appNum, hostAddr)
 		file.Close()
 		if err != nil {
 			panic(err)
 		}
 
-		s := &storage.Local{RootDir: viper.GetString("root-dir")}
-		r := nexmo.NewRouter(client, s, viper.GetString("host-addr"))
+		s := &storage.Local{RootDir: rootDir}
+		r := nexmo.NewRouter(client, s, hostAddr)
 
-		log.Printf("%v listening on port :%d", os.Args[0], viper.GetInt("port"))
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("port")), r); err != nil {
+		log.Printf("%v listening on port :%d", os.Args[0], port)
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", port), r); err != nil {
 			log.Fatal(err)
 		}
 	},
@@ -59,22 +68,15 @@ var serverCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serverCmd)
 
-	serverCmd.Flags().Int("port", 4001, "Server listening port")
-	serverCmd.Flags().String("root-dir", ".", "Root storage directory path")
-	serverCmd.Flags().String("host-addr", "", "Canonical address of the publicly available web server")
-	serverCmd.Flags().String("private-key", "", "Path to the private key that should be used to sign JWTs")
-	serverCmd.Flags().String("app-id", "", "Nexmo's application identifier")
-	serverCmd.Flags().String("app-num", "", "Nexmo's application registered number")
+	serverCmd.Flags().IntVar(&port, "port", 4001, "Server listening port")
+	serverCmd.Flags().StringVar(&rootDir, "root-dir", ".", "Root storage directory path")
+	serverCmd.Flags().StringVar(&hostAddr, "host-addr", "", "Canonical address of the publicly available web server")
+	serverCmd.Flags().StringVar(&pKey, "private-key", "", "Path to the private key that should be used to sign JWTs")
+	serverCmd.Flags().StringVar(&appID, "app-id", "", "Nexmo's application identifier")
+	serverCmd.Flags().StringVar(&appNum, "app-num", "", "Nexmo's application registered number")
 
 	serverCmd.MarkFlagRequired("host-addr")
 	serverCmd.MarkFlagRequired("app-id")
 	serverCmd.MarkFlagRequired("app-num")
 	serverCmd.MarkFlagRequired("private-key")
-
-	viper.BindPFlag("port", serverCmd.Flags().Lookup("port"))
-	viper.BindPFlag("host-addr", serverCmd.Flags().Lookup("host-addr"))
-	viper.BindPFlag("root-dir", serverCmd.Flags().Lookup("root-dir"))
-	viper.BindPFlag("private-key", serverCmd.Flags().Lookup("private-key"))
-	viper.BindPFlag("app-id", serverCmd.Flags().Lookup("app-id"))
-	viper.BindPFlag("app-num", serverCmd.Flags().Lookup("app-num"))
 }
