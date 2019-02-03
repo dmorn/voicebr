@@ -78,10 +78,10 @@ func LogEventHandler(w http.ResponseWriter, r *http.Request) {
 
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r.Body); err != nil {
-		log.Printf("Error: unable to read body: %v", err)
+		log.Printf("log event handler error: unable to read body: %v", err)
 	}
 
-	log.Printf("Event received: %v", buf.String())
+	log.Printf("event received: %v", buf.String())
 }
 
 func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
@@ -97,7 +97,7 @@ func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
 			RecordingUUID    string `json:"recording_uuid"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
-			log.Printf("Error: unable to decode recorinding event: %v", err)
+			log.Printf("store recording handler error: unable to decode recorinding event: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -106,7 +106,7 @@ func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
 		// later be used into the outbound calls.
 		resp, err := c.Get(content.RecordingURL)
 		if err != nil {
-			log.Printf("RecordingEventHandler error: unable to download file: %v", err)
+			log.Printf("store recording handler error: unable to download file: %v", err)
 			return
 		}
 		defer resp.Body.Close()

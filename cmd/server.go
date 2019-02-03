@@ -28,12 +28,12 @@ import (
 )
 
 var (
-	appID string
-	appNum string
+	appID    string
+	appNum   string
 	hostAddr string
-	rootDir string
-	pKey string
-	port int
+	rootDir  string
+	pKey     string
+	port     int
 )
 
 // serverCmd represents the server command
@@ -43,7 +43,9 @@ var serverCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.SetFlags(0)
 		log.Printf("version: %s, commit: %s, built at: %s\n\n", Version, Commit, BuildTime)
+		log.Printf("app-id: %s, app-num: %s, host-addr: %s, root-dir: %s", appID, appNum, hostAddr, rootDir)
 
+		log.Printf("loading private key from %s", pKey)
 		file, err := os.Open(pKey)
 		if err != nil {
 			log.Fatal(err)
@@ -55,6 +57,7 @@ var serverCmd = &cobra.Command{
 			panic(err)
 		}
 
+		log.Printf("creating local storage in: %s", rootDir)
 		s := &storage.Local{RootDir: rootDir}
 		r := nexmo.NewRouter(client, s, hostAddr)
 

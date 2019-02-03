@@ -85,7 +85,7 @@ func (c *Client) Get(url string) (*http.Response, error) {
 	defer cancel()
 
 	if err := GetLimiter.Wait(ctx); err != nil {
-		return nil, fmt.Errorf("Client: unable to perform Get: %v", err)
+		return nil, fmt.Errorf("client: unable to perform Get: %v", err)
 	}
 	return c.Do("GET", url, nil)
 }
@@ -95,7 +95,7 @@ func (c *Client) Post(url string, body io.Reader) (*http.Response, error) {
 	defer cancel()
 
 	if err := CallLimiter.Wait(ctx); err != nil {
-		return nil, fmt.Errorf("Client: unable to perform Post: %v", err)
+		return nil, fmt.Errorf("client: unable to perform Post: %v", err)
 	}
 	return c.Do("POST", url, body)
 }
@@ -173,28 +173,22 @@ func (c *Client) Call(p ContactsProvider, recName string) {
 	contacts, err := DecodeContacts(p)
 	if err != nil {
 		if err == ErrCorruptedContacts {
-			log.Printf("Call: %v", err)
+			log.Printf("call: %v", err)
 		} else {
-			log.Printf("Call error: %v", err)
+			log.Printf("call error: %v", err)
 			return
 		}
 	}
 
-	sem := make(chan bool, 3) // TODO: This has to change. Max rate: 3 calls/sec
-	for _, v := range contacts {
-		sem <- true
-		go func(contact Contact) {
-			defer func() { <-sem }()
+	log.Printf("client: broadcast call initiated: contacts decoded: %d", len(contacts))
 
-			log.Printf("Calling %v, message: %v", contact.Name, recName)
-			err := c.call(contact, recName)
-			if err != nil {
-				log.Printf("Call error: %v", err)
+	for _, v := range contacts {
+		go func(contact Contact) {
+			log.Printf("calling %v, message: %v", contact.Name, recName)
+			if err := c.call(contact, recName); err != nil {
+				log.Printf("call error: %v", err)
 			}
 		}(v)
-	}
-	for i := 0; i < cap(sem); i++ {
-		sem <- true
 	}
 }
 

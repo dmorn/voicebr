@@ -19,6 +19,7 @@ package storage
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,16 +36,18 @@ type Local struct {
 // WriteRec creates a file in `RootDir`/recs/`filename` and copies
 // the contents of `src` into it.
 func (l *Local) WriteRec(src io.Reader, fileName string) (string, error) {
-	if err := ensurePresent(l.RootDir); err != nil {
+	path := filepath.Join(l.RootDir, "recs")
+	if err := ensureDirPresent(path); err != nil {
 		return "", fmt.Errorf("local storage error: %v", err)
 	}
 
-	path := filepath.Join(l.RootDir, "recs", fileName)
+	path = filepath.Join(path, fileName)
 	dest, err := os.Create(path)
 	if err != nil {
 		return "", fmt.Errorf("local storage error: unable to create destination: %v", err)
 	}
 
+	log.Printf("local storage: saving recording %s", path)
 	if _, err = io.Copy(dest, src); err != nil {
 		return "", fmt.Errorf("local storage error: unable to copy rec to destination: %v", err)
 	}
@@ -52,25 +55,33 @@ func (l *Local) WriteRec(src io.Reader, fileName string) (string, error) {
 	return path, nil
 }
 
+func ensureDirPresent(dir string) error {
+	return os.MkdirAll(dir, os.ModePerm)
+}
+
 func (l *Local) RecFileHandler() http.Handler {
 	path := filepath.Join(l.RootDir, "recs")
 	return http.FileServer(http.Dir(path))
 }
 
-func ensurePresent(dir string) error {
-	return os.MkdirAll(dir, os.ModePerm)
-}
-
 func (l *Local) ReadContacts(dest io.Writer) error {
 	path := filepath.Join(l.RootDir, "contacts.csv")
-	file, err := os.Open(path)
+	file, err := openOrCreate(path)
 	if err != nil {
 		return fmt.Errorf("local storage error: unable to open contacts file: %v", err)
 	}
 	defer file.Close()
 
+	log.Printf("local storage: reading contacts from %s", path)
 	if _, err = io.Copy(dest, file); err != nil {
 		return fmt.Errorf("local storage error: unable to copy contacts to destination: %v", err)
 	}
 	return nil
+}
+
+func openOrCreate(file string) (*os.File, error) {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return os.Create(file)
+	}
+	return os.Open(file)
 }
