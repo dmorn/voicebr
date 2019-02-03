@@ -150,7 +150,12 @@ func DecodeContacts(p ContactsProvider) ([]Contact, error) {
 		return []Contact{}, err
 	}
 
-	recs, err := csv.NewReader(&buf).ReadAll()
+	r := csv.NewReader(&buf)
+
+	// lines starting with # are considered comments
+	r.Comment = rune('#')
+
+	recs, err := r.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("decode contacts: %v", err)
 	}

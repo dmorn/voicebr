@@ -53,8 +53,10 @@ func makeRecordAnswerHandler(hostAddr string) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode([]map[string]interface{}{
 			{
-				"action": "talk",
-				"text":   "Talk now",
+				"action":    "talk",
+				"voiceName": "Carla",
+				"level":     0.5,
+				"text":      "Parla pure",
 			},
 			{
 				"action":    "record",
@@ -131,11 +133,8 @@ func makePlayRecordingHandler(hostAddr string) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode([]map[string]interface{}{
 			{
-				"action": "talk",
-				"text":   "Recorded message",
-			},
-			{
 				"action":    "stream",
+				"level":     0.5,
 				"streamUrl": []string{hostAddr + "/static/" + name},
 			},
 		})
