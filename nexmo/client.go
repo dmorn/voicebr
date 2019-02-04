@@ -80,20 +80,14 @@ func (c *Client) Token() (string, error) {
 	return token.SignedString(c.key)
 }
 
-func (c *Client) Get(url string) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
+func (c *Client) Get(ctx context.Context, url string) (*http.Response, error) {
 	if err := GetLimiter.Wait(ctx); err != nil {
 		return nil, fmt.Errorf("client: unable to perform Get: %v", err)
 	}
 	return c.Do("GET", url, nil)
 }
 
-func (c *Client) Post(url string, body io.Reader) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
+func (c *Client) Post(ctx context.Context, url string, body io.Reader) (*http.Response, error) {
 	if err := CallLimiter.Wait(ctx); err != nil {
 		return nil, fmt.Errorf("client: unable to perform Post: %v", err)
 	}
@@ -189,15 +183,21 @@ func (c *Client) Call(p ContactsProvider, recName string) {
 
 	for _, v := range contacts {
 		go func(contact Contact) {
+			// We can make up to three req/sec. Give it twice as
+			// that time as deadline.
+			d := (len(contacts) / 3) * 2
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(d))
+			defer cancel()
+
 			log.Printf("calling %v, message: %v", contact.Name, recName)
-			if err := c.call(contact, recName); err != nil {
+			if err := c.call(ctx, contact, recName); err != nil {
 				log.Printf("call error: %v", err)
 			}
 		}(v)
 	}
 }
 
-func (c *Client) call(to Contact, recName string) error {
+func (c *Client) call(ctx context.Context, to Contact, recName string) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(&struct {
 		To     []Contact `json:"to"`
@@ -216,7 +216,7 @@ func (c *Client) call(to Contact, recName string) error {
 		return fmt.Errorf("unable to encode ncco: %v", err)
 	}
 
-	_, err := c.Post("https://api.nexmo.com/v1/calls", &buf)
+	_, err := c.Post(ctx, "https://api.nexmo.com/v1/calls", &buf)
 	if err != nil {
 		return fmt.Errorf("unable to make call: %v", err)
 	}

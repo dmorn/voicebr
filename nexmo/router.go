@@ -18,6 +18,7 @@ package nexmo
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -106,7 +107,7 @@ func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
 
 		// Download mp3 file with the recording. It will
 		// later be used into the outbound calls.
-		resp, err := c.Get(content.RecordingURL)
+		resp, err := c.Get(context.Background(), content.RecordingURL)
 		if err != nil {
 			log.Printf("store recording handler error: unable to download file: %v", err)
 			return
