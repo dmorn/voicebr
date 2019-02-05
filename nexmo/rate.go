@@ -13,7 +13,7 @@ type Limiter struct {
 // NewLimiter creates a new Limiter intance that
 // allows `r` events per second to happen.
 // It is a wrapper around rate.Limiter, configured
-// with an burst of `r` and Limit of `r`.
+// with an burst of 1 and Limit of `r`.
 func NewLimiter(r int) *Limiter {
 	return &Limiter{
 		internal: rate.NewLimiter(rate.Limit(r), 1),
