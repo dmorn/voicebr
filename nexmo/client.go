@@ -184,9 +184,13 @@ func (c *Client) Call(p ContactsProvider, recName string) {
 
 	for _, v := range contacts {
 		go func(contact Contact) {
-			// We can make up to three req/sec. Give it twice as
-			// that time as deadline.
+			// Remember that we can make up to three req/sec, so the
+			// last contacts will for sure have to wait for some time.
 			d := (len(contacts) / 3) * 2
+			if d < 1 {
+				d = 1
+			}
+
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(d))
 			defer cancel()
 
