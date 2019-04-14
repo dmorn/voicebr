@@ -37,7 +37,7 @@ type Storage interface {
 
 func NewRouter(c *Client, s Storage, hostAddr string) *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(hostAddr))
+	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(s, hostAddr))
 	r.HandleFunc("/record/voice/event", LogEventHandler)
 	r.HandleFunc("/store/recording/event", makeStoreRecordingEventHandler(s, c))
 	r.HandleFunc("/play/recording/event", LogEventHandler)
@@ -59,7 +59,7 @@ func makeTextNCCO(text string) ncco {
 	}
 }
 
-func makeRecordAnswerHandler(hostAddr string) http.HandlerFunc {
+func makeRecordAnswerHandler(s Storage, hostAddr string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			r.Body.Close()
@@ -71,24 +71,42 @@ func makeRecordAnswerHandler(hostAddr string) http.HandlerFunc {
 			From string `json:"from"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			log.Printf("answer handler: unable to read request body: %v", err)
+
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode([]map[string]interface{}{
-				makeTextNCCO("non riesco a autenticarti"),
-			})
 			return
 		}
 
-		// TODO: check if body.From is in the whitelist
-		log.Printf("Calling number: %s", body.From)
+		log.Printf("answer handler: authenticating %s...", body.From)
+		whitelist, err := DecodeContacts(s.ReadWhitelist)
+		if err != nil {
+			log.Printf("answer handler: unable to decode whitelist: %v", err)
+
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var caller *Contact
+		for _, v := range whitelist {
+			if v.Number == body.From {
+				caller = &v
+			}
+		}
+		if caller == nil {
+			log.Printf("answer handler: number %s cannot broadcast", body.From)
+
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode([]map[string]interface{}{
-			makeTextNCCO("parla pure"),
+			makeTextNCCO("parla pure " + caller.Name),
 			{
 				"action":    "record",
 				"beepStart": true,
 				"format":    recFormat,
-				"eventUrl":  []string{hostAddr + "/store/recording/event"},
+				"eventUrl":  []string{"https://" + hostAddr + "/store/recording/event"},
 				"endOnKey":  1,
 			},
 		})
