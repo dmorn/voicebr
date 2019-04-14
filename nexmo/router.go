@@ -48,17 +48,42 @@ func NewRouter(c *Client, s Storage, hostAddr string) *mux.Router {
 	return r
 }
 
+type ncco map[string]interface{}
+
+func makeTextNCCO(text string) ncco {
+	return map[string]interface{}{
+		"action":    "talk",
+		"voiceName": "Carla",
+		"level":     0.5,
+		"text":      text,
+	}
+}
+
 func makeRecordAnswerHandler(hostAddr string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			r.Body.Close()
+		}()
+
 		w.Header().Set("content-type", "application/json")
+
+		var body struct {
+			From string `json:"from"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode([]map[string]interface{}{
+				makeTextNCCO("non riesco a autenticarti"),
+			})
+			return
+		}
+
+		// TODO: check if body.From is in the whitelist
+		log.Printf("Calling number: %s", body.From)
+
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode([]map[string]interface{}{
-			{
-				"action":    "talk",
-				"voiceName": "Carla",
-				"level":     0.5,
-				"text":      "Parla pure",
-			},
+			makeTextNCCO("parla pure"),
 			{
 				"action":    "record",
 				"beepStart": true,

@@ -133,14 +133,15 @@ func NewContact(num, name string) Contact {
 }
 
 type ContactsProvider interface {
-	ReadContacts(dest io.Writer) error
+	ReadBroadcastList(dest io.Writer) error
+	ReadWhitelist(dest io.Writer) error
 }
 
 var ErrCorruptedContacts = errors.New("contacts file read contains corrupted data, thus the result could be partial")
 
-func DecodeContacts(p ContactsProvider) ([]Contact, error) {
+func DecodeContacts(f func(io.Writer) error) ([]Contact, error) {
 	var buf bytes.Buffer
-	if err := p.ReadContacts(&buf); err != nil {
+	if err := f(&buf); err != nil {
 		return []Contact{}, err
 	}
 
@@ -169,7 +170,7 @@ func DecodeContacts(p ContactsProvider) ([]Contact, error) {
 }
 
 func (c *Client) Call(p ContactsProvider, recName string) {
-	contacts, err := DecodeContacts(p)
+	contacts, err := DecodeContacts(p.ReadBroadcastList)
 	if err != nil {
 		if err == ErrCorruptedContacts {
 			log.Printf("call: %v", err)

@@ -42,8 +42,8 @@ var serverCmd = &cobra.Command{
 	Short: "start a voicebr server",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.SetFlags(0)
-		log.Printf("version: %s, commit: %s, built at: %s\n\n", Version, Commit, BuildTime)
-		log.Printf("app-id: %s, app-num: %s, host-addr: %s, root-dir: %s", appID, appNum, hostAddr, rootDir)
+		log.Printf("version: %s, commit: %s, built at: %s\n", Version, Commit, BuildTime)
+		log.Printf("app-id: %s, app-num: %s, host-addr: %s, root-dir: %s\n\n", appID, appNum, hostAddr, rootDir)
 
 		log.Printf("loading private key from %s", pKey)
 		file, err := os.Open(pKey)
