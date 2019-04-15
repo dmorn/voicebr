@@ -35,13 +35,13 @@ type Storage interface {
 	WriteRec(src io.Reader, fileName string) (string, error)
 }
 
-func NewRouter(c *Client, s Storage, hostAddr string) *mux.Router {
+func NewRouter(c *Client, s Storage, hostname string) *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(s, hostAddr))
+	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(s, hostname))
 	r.HandleFunc("/record/voice/event", LogEventHandler)
 	r.HandleFunc("/store/recording/event", makeStoreRecordingEventHandler(s, c))
 	r.HandleFunc("/play/recording/event", LogEventHandler)
-	r.HandleFunc("/play/recording/{name}", makePlayRecordingHandler(hostAddr))
+	r.HandleFunc("/play/recording/{name}", makePlayRecordingHandler(hostname))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", s.RecFileHandler()))
 	r.Use(loggingMiddleware)
 
@@ -106,7 +106,7 @@ func makeRecordAnswerHandler(s Storage, hostAddr string) http.HandlerFunc {
 				"action":    "record",
 				"beepStart": true,
 				"format":    recFormat,
-				"eventUrl":  []string{"https://" + hostAddr + "/store/recording/event"},
+				"eventUrl":  []string{hostAddr + "/store/recording/event"},
 				"endOnKey":  1,
 			},
 		})
