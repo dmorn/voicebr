@@ -25,6 +25,11 @@ import (
 	"path/filepath"
 )
 
+const (
+	BroadcastListFile = "contacts.csv"
+	WhitelistFile     = "whitelist.csv"
+)
+
 // Local is a local storage implementation, capable
 // of writing data into local files.
 type Local struct {
@@ -64,8 +69,8 @@ func (l *Local) RecFileHandler() http.Handler {
 	return http.FileServer(http.Dir(path))
 }
 
-func (l *Local) ReadContacts(dest io.Writer) error {
-	path := filepath.Join(l.RootDir, "contacts.csv")
+func (l *Local) ReadContacts(dest io.Writer, fileName string) error {
+	path := filepath.Join(l.RootDir, fileName)
 	file, err := openOrCreate(path)
 	if err != nil {
 		return fmt.Errorf("local storage error: unable to open contacts file: %v", err)
@@ -77,6 +82,14 @@ func (l *Local) ReadContacts(dest io.Writer) error {
 		return fmt.Errorf("local storage error: unable to copy contacts to destination: %v", err)
 	}
 	return nil
+}
+
+func (l *Local) ReadBroadcastList(dest io.Writer) error {
+	return l.ReadContacts(dest, BroadcastListFile)
+}
+
+func (l *Local) ReadWhitelist(dest io.Writer) error {
+	return l.ReadContacts(dest, WhitelistFile)
 }
 
 func openOrCreate(file string) (*os.File, error) {

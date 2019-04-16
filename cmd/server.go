@@ -28,12 +28,12 @@ import (
 )
 
 var (
-	appID    string
-	appNum   string
-	hostAddr string
-	rootDir  string
-	pKey     string
-	port     int
+	appID   string
+	appNum  string
+	origin  string
+	rootDir string
+	pKey    string
+	port    int
 )
 
 // serverCmd represents the server command
@@ -42,8 +42,8 @@ var serverCmd = &cobra.Command{
 	Short: "start a voicebr server",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.SetFlags(0)
-		log.Printf("version: %s, commit: %s, built at: %s\n\n", Version, Commit, BuildTime)
-		log.Printf("app-id: %s, app-num: %s, host-addr: %s, root-dir: %s", appID, appNum, hostAddr, rootDir)
+		log.Printf("version: %s, commit: %s, built at: %s\n", Version, Commit, BuildTime)
+		log.Printf("app-id: %s, app-num: %s, origin: %s, root-dir: %s\n\n", appID, appNum, origin, rootDir)
 
 		log.Printf("loading private key from %s", pKey)
 		file, err := os.Open(pKey)
@@ -51,7 +51,7 @@ var serverCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		client, err := nexmo.NewClient(file, appID, appNum, hostAddr)
+		client, err := nexmo.NewClient(file, appID, appNum, origin)
 		file.Close()
 		if err != nil {
 			panic(err)
@@ -59,9 +59,9 @@ var serverCmd = &cobra.Command{
 
 		log.Printf("creating local storage in: %s", rootDir)
 		s := &storage.Local{RootDir: rootDir}
-		r := nexmo.NewRouter(client, s, hostAddr)
+		r := nexmo.NewRouter(client, s, origin)
 
-		log.Printf("%v listening on port :%d", os.Args[0], port)
+		log.Printf("%v listening on port :%d\n\n", os.Args[0], port)
 		if err := http.ListenAndServe(fmt.Sprintf(":%d", port), r); err != nil {
 			log.Fatal(err)
 		}
@@ -73,7 +73,7 @@ func init() {
 
 	serverCmd.Flags().IntVar(&port, "port", 4001, "Server listening port")
 	serverCmd.Flags().StringVar(&rootDir, "root-dir", ".", "Root storage directory path")
-	serverCmd.Flags().StringVar(&hostAddr, "host-addr", "", "Canonical address of the publicly available web server")
+	serverCmd.Flags().StringVar(&origin, "origin", "", "Canonical protocol + authority of the web server that will handle nexmo callbacks")
 	serverCmd.Flags().StringVar(&pKey, "private-key", "", "Path to the private key that should be used to sign JWTs")
 	serverCmd.Flags().StringVar(&appID, "app-id", "", "Nexmo's application identifier")
 	serverCmd.Flags().StringVar(&appNum, "app-num", "", "Nexmo's application registered number")
