@@ -41,11 +41,11 @@ type Client struct {
 	internal *http.Client
 	AppID    string
 	Number   string
-	Hostname string
+	Origin   string
 	key      interface{}
 }
 
-func NewClient(pKeyR io.Reader, appID, number, hostname string) (*Client, error) {
+func NewClient(pKeyR io.Reader, appID, number, origin string) (*Client, error) {
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, pKeyR); err != nil {
 		return nil, fmt.Errorf("new client error: unable to read private key: %v", err)
@@ -60,7 +60,7 @@ func NewClient(pKeyR io.Reader, appID, number, hostname string) (*Client, error)
 		internal: http.DefaultClient,
 		AppID:    appID,
 		Number:   number,
-		Hostname: hostname,
+		Origin:   origin,
 		key:      key,
 	}, nil
 }
@@ -180,13 +180,18 @@ func (c *Client) Call(p ContactsProvider, recName string) {
 		}
 	}
 
-	log.Printf("broadcast call initiated: contacts decoded: %d", len(contacts))
+	log.Printf("client: contacts decoded: %d", len(contacts))
 
 	for _, v := range contacts {
 		go func(contact Contact) {
 			// We can make up to three req/sec. Give it twice as
 			// that time as deadline.
-			d := (len(contacts) / 3) * 2
+			n := len(contacts) / 3
+			if n < 1 {
+				n = 1
+			}
+
+			d := n * 2
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(d))
 			defer cancel()
 
@@ -211,8 +216,8 @@ func (c *Client) call(ctx context.Context, to Contact, recName string) error {
 			Type:   "phone",
 			Number: c.Number,
 		},
-		Answer: []string{c.Hostname + "/play/recording/" + recName},
-		Event:  []string{c.Hostname + "/play/recording/event"},
+		Answer: []string{c.Origin + "/play/recording/" + recName},
+		Event:  []string{c.Origin + "/play/recording/event"},
 	}); err != nil {
 		return fmt.Errorf("unable to encode ncco: %v", err)
 	}

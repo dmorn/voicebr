@@ -35,13 +35,13 @@ type Storage interface {
 	WriteRec(src io.Reader, fileName string) (string, error)
 }
 
-func NewRouter(c *Client, s Storage, hostname string) *mux.Router {
+func NewRouter(c *Client, s Storage, origin string) *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(s, hostname))
+	r.HandleFunc("/record/voice/answer", makeRecordAnswerHandler(s, origin))
 	r.HandleFunc("/record/voice/event", LogEventHandler)
 	r.HandleFunc("/store/recording/event", makeStoreRecordingEventHandler(s, c))
 	r.HandleFunc("/play/recording/event", LogEventHandler)
-	r.HandleFunc("/play/recording/{name}", makePlayRecordingHandler(hostname))
+	r.HandleFunc("/play/recording/{name}", makePlayRecordingHandler(origin))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", s.RecFileHandler()))
 	r.Use(loggingMiddleware)
 
@@ -59,7 +59,7 @@ func makeTextNCCO(text string) ncco {
 	}
 }
 
-func makeRecordAnswerHandler(s Storage, hostAddr string) http.HandlerFunc {
+func makeRecordAnswerHandler(s Storage, origin string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			r.Body.Close()
@@ -106,7 +106,7 @@ func makeRecordAnswerHandler(s Storage, hostAddr string) http.HandlerFunc {
 				"action":    "record",
 				"beepStart": true,
 				"format":    recFormat,
-				"eventUrl":  []string{hostAddr + "/store/recording/event"},
+				"eventUrl":  []string{origin + "/store/recording/event"},
 				"endOnKey":  1,
 			},
 		})
@@ -127,7 +127,7 @@ func LogEventHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("log event handler error: unable to read body: %v", err)
 	}
 
-	log.Printf("event received: %v", buf.String())
+	log.Printf("[EVENT] %v", buf.String())
 }
 
 func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
@@ -169,7 +169,7 @@ func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
 	}
 }
 
-func makePlayRecordingHandler(hostAddr string) http.HandlerFunc {
+func makePlayRecordingHandler(origin string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := mux.Vars(r)["name"]
 
@@ -185,7 +185,7 @@ func makePlayRecordingHandler(hostAddr string) http.HandlerFunc {
 			{
 				"action":    "stream",
 				"level":     0.5,
-				"streamUrl": []string{hostAddr + "/static/" + name},
+				"streamUrl": []string{origin + "/static/" + name},
 			},
 			{
 				"action":    "talk",
