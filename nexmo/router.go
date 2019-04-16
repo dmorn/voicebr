@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -48,36 +49,47 @@ func NewRouter(c *Client, s Storage, origin string) *mux.Router {
 	return r
 }
 
-type ncco map[string]interface{}
-
-func makeTextNCCO(text string) ncco {
-	return map[string]interface{}{
-		"action":    "talk",
-		"voiceName": "Carla",
-		"level":     0.5,
-		"text":      text,
+func CallerFromRequest(r *http.Request) (string, error) {
+	if r.Method == "POST" {
+		return callerFromRequestBody(r.Body)
+	} else {
+		return callerFromRequestQuery(r)
 	}
+}
+
+func callerFromRequestBody(p io.ReadCloser) (string, error) {
+	defer func() {
+		p.Close()
+	}()
+
+	var body struct {
+		From string `json:"from"`
+	}
+	if err := json.NewDecoder(p).Decode(&body); err != nil {
+		return "", fmt.Errorf("unable to find calling number in request body: %v", err)
+	}
+	return body.From, nil
+}
+
+func callerFromRequestQuery(r *http.Request) (string, error) {
+	from := r.URL.Query().Get("from")
+	if from == "" {
+		return "", fmt.Errorf("unable to find calling number in query parameters")
+	}
+	return from, nil
 }
 
 func makeRecordAnswerHandler(s Storage, origin string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			r.Body.Close()
-		}()
+		from, err := CallerFromRequest(r)
+		if err != nil {
+			log.Printf("answer handler: %v", err)
 
-		w.Header().Set("content-type", "application/json")
-
-		var body struct {
-			From string `json:"from"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			log.Printf("answer handler: unable to read request body: %v", err)
-
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		log.Printf("answer handler: authenticating %s...", body.From)
+		log.Printf("answer handler: authenticating %s...", from)
 		whitelist, err := DecodeContacts(s.ReadWhitelist)
 		if err != nil {
 			log.Printf("answer handler: unable to decode whitelist: %v", err)
@@ -88,26 +100,32 @@ func makeRecordAnswerHandler(s Storage, origin string) http.HandlerFunc {
 
 		var caller *Contact
 		for _, v := range whitelist {
-			if v.Number == body.From {
+			if v.Number == from {
 				caller = &v
 			}
 		}
 		if caller == nil {
-			log.Printf("answer handler: number %s cannot broadcast", body.From)
+			log.Printf("answer handler: number %s cannot broadcast", from)
 
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
+		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode([]map[string]interface{}{
-			makeTextNCCO("parla pure " + caller.Name),
+			{
+				"action":    "talk",
+				"voiceName": "Carla",
+				"level":     0.5,
+				"text":      "parla pure " + caller.Name,
+			},
 			{
 				"action":    "record",
 				"beepStart": true,
 				"format":    recFormat,
 				"eventUrl":  []string{origin + "/store/recording/event"},
-				"endOnKey":  1,
+				"endOnKey":  "#",
 			},
 		})
 	}
@@ -138,9 +156,8 @@ func makeStoreRecordingEventHandler(s Storage, c *Client) http.HandlerFunc {
 		defer r.Body.Close()
 
 		var content struct {
-			ConversationUUID string `json:"conversation_uuid"`
-			RecordingURL     string `json:"recording_url"`
-			RecordingUUID    string `json:"recording_uuid"`
+			RecordingURL  string `json:"recording_url"`
+			RecordingUUID string `json:"recording_uuid"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
 			log.Printf("store recording handler error: unable to decode recorinding event: %v", err)
