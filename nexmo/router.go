@@ -118,7 +118,7 @@ func makeRecordAnswerHandler(s Storage, origin string) http.HandlerFunc {
 				"action":    "talk",
 				"voiceName": "Carla",
 				"level":     0.5,
-				"text":      "parla pure " + caller.Name,
+				"text":      "Parla pure" + caller.Name,
 			},
 			{
 				"action":    "record",
