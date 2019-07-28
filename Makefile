@@ -2,32 +2,17 @@ VERSION          := $(shell git describe --tags --always --dirty="-dev")
 COMMIT           := $(shell git rev-parse --short HEAD)
 DATE             := $(shell date -u '+%Y-%m-%d-%H%M UTC')
 VERSION_FLAGS    := -ldflags='-X "main.version=$(VERSION)" -X "main.commit=$(COMMIT)" -X "main.buildTime=$(DATE)"'
+DEST = bin$(if $(GOOS),/$(GOOS),)$(if /$(GOARCH),$(GOARCH),)
 
-#V := 1 # Verbose
-Q := $(if $V,,@)
+export GO111MODULE=on
 
-allpackages = $(shell ( cd $(CURDIR) && go list ./... ))
-gofiles = $(shell ( cd $(CURDIR) && find . -iname \*.go ))
-
-arch = "$(if $(GOARCH),_$(GOARCH)/,/)"
-bind = "$(CURDIR)/bin/$(GOOS)$(arch)"
-go = $(env GO111MODULE=on go)
-
-.PHONY: all
+.PHONY: all voicebr clean test format
 all: voicebr
-
-.PHONY: voicebr
 voicebr:
-	$Q go build $(if $V,-v) -o $(bind)/voicebr $(VERSION_FLAGS) $(CURDIR)/main.go
-
-.PHONY: clean
+	go build -v -o $(DEST)/voicebr $(VERSION_FLAGS)
 clean:
-	$Q rm -rf $(CURDIR)/bin
-
-.PHONY: test
+	rm -rf bin/
 test:
-	$Q go test $(allpackages)
-
-.PHONY: format
+	go test ./...
 format:
-	$Q gofmt -s -w $(gofiles)
+	go fmt ./...
