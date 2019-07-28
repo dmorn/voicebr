@@ -21,4 +21,4 @@ _test/
 *.pem
 data/
 priv/
-.ansible/inventory.yml
+.ansible/inventory

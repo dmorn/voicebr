@@ -1,2 +1,0 @@
-[default]
-0.tcp.eu.ngrok.io ansible_user=pi ansible_port=16462
