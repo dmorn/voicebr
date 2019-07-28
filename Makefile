@@ -12,6 +12,7 @@ voicebr:
 	go build -v -o $(DEST)/voicebr $(VERSION_FLAGS)
 clean:
 	rm -rf bin/
+	rm -rf dist/
 test:
 	go test ./...
 format:
