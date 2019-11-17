@@ -9,8 +9,6 @@ export GO111MODULE=on
 all: voicebr
 voicebr:
 	go build -v -o bin/voicebr $(VERSION_FLAGS)
-deploy:
-	ansible-playbook -i .ansible/inventory .ansible/playbook.yml
 clean:
 	rm -rf bin/
 	rm -rf dist/
