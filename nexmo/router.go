@@ -99,9 +99,9 @@ func makeRecordAnswerHandler(s Storage, origin string) http.HandlerFunc {
 		}
 
 		var caller *Contact
-		for _, v := range whitelist {
+		for i, v := range whitelist {
 			if v.Number == from {
-				caller = &v
+				caller = &whitelist[i]
 			}
 		}
 		if caller == nil {
