@@ -39,7 +39,7 @@ var (
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "start a voicebr server",
+	Short: "Start a voicebr server",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.SetFlags(0)
 		log.Printf("version: %s, commit: %s, built at: %s\n", Version, Commit, BuildTime)
