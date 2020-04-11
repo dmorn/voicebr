@@ -1,7 +1,6 @@
 package vonage
 
 import (
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +33,7 @@ type VoiceWebhook struct {
 	Event http.Handler
 }
 
-func discardHandler(w http.ResponseWriter, r http.Request) {
+func discardHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	io.Copy(ioutil.Discard, r.Body)
 	w.WriteHeader(http.StatusOK)
@@ -44,14 +43,15 @@ func discardHandler(w http.ResponseWriter, r http.Request) {
 // which do nothing but trashing the request body.
 func NewWebook() *VoiceWebhook {
 	return &VoiceWebhook{
-		Answer: discardHandler,
-		Event:  discardHandler,
+		Answer: http.HandlerFunc(discardHandler),
+		Event:  http.HandlerFunc(discardHandler),
 	}
 }
 
-func NewVoiceWebhooksMux(hook *VoiceWebhook) *http.ServeMux {
+func NewVoiceWebhookMux(hook *VoiceWebhook) *http.ServeMux {
 	m := http.NewServeMux()
-	m.Handle("/voice/answer", h.Answer)
-	m.Handle("/voice/event", h.Event)
+	m.Handle("/voice/answer", hook.Answer)
+	m.Handle("/voice/event", hook.Event)
 	return m
 }
+
