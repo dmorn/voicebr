@@ -54,4 +54,3 @@ func NewVoiceWebhookMux(hook *VoiceWebhook) *http.ServeMux {
 	m.Handle("/voice/event", hook.Event)
 	return m
 }
-
