@@ -11,12 +11,12 @@ import (
 	"github.com/jecoz/voicebr/vonage"
 )
 
-type codeError struct {
+type httpError struct {
 	Code int
 	Err  error
 }
 
-func (e *codeError) Error() string {
+func (e *httpError) Error() string {
 	return e.Err.Error()
 }
 
@@ -24,9 +24,9 @@ func Error(w http.ResponseWriter, err error) {
 	log.Printf("error * %v", err)
 
 	code := http.StatusInternalServerError
-	var cerr *codeError
-	if errors.As(err, &cerr) {
-		code = cerr.Code
+	var herr *httpError
+	if errors.As(err, &herr) {
+		code = herr.Code
 	}
 	http.Error(w, err.Error(), code)
 }
@@ -35,13 +35,13 @@ func returnAnswer(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("unable to read answer request: %v", err)
+		return fmt.Errorf("answer request: %v", err)
 	}
 	var p vonage.VoiceAnswerRequest
 	if err = json.Unmarshal(b, &p); err != nil {
-		return &codeError{
+		return &httpError{
 			Code: http.StatusBadRequest,
-			Err:  fmt.Errorf("unable to unmarshal answer request: %w", err),
+			Err:  fmt.Errorf("answer request: %w", err),
 		}
 	}
 
@@ -49,7 +49,7 @@ func returnAnswer(w http.ResponseWriter, r *http.Request) error {
 
 	ncco := vonage.NewTalkControl("Hi from Jecoz")
 	if err = json.NewEncoder(w).Encode(&ncco); err != nil {
-		return fmt.Errorf("unable to send response: %w", err)
+		return fmt.Errorf("answer response: %w", err)
 	}
 	return nil
 }
@@ -66,13 +66,13 @@ func returnEvent(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("unable to read event request: %v", err)
+		return fmt.Errorf("event request: %v", err)
 	}
 	var p vonage.VoiceEventRequest
 	if err = json.Unmarshal(b, &p); err != nil {
-		return &codeError{
+		return &httpError{
 			Code: http.StatusBadRequest,
-			Err:  fmt.Errorf("unable to unmarshal event request: %w", err),
+			Err:  fmt.Errorf("event request: %w", err),
 		}
 	}
 
@@ -101,6 +101,6 @@ func main() {
 	}
 	log.Printf("server listening on addr: %v", addr)
 	if err := srv.ListenAndServe(); err != nil {
-		log.Printf("*** listener error: %v", err)
+		log.Printf("*** listener: %v", err)
 	}
 }
