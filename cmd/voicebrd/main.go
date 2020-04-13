@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -41,13 +40,8 @@ func (h ReturnHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func Answer(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-	b, err := ioutil.ReadAll(r.Body)
+	p, err := vonage.ParseVoiceAnswerRequest(r)
 	if err != nil {
-		return fmt.Errorf("answer request: %v", err)
-	}
-	var p vonage.VoiceAnswerRequest
-	if err = json.Unmarshal(b, &p); err != nil {
 		return &httpError{
 			Code: http.StatusBadRequest,
 			Err:  fmt.Errorf("answer request: %w", err),
@@ -64,20 +58,15 @@ func Answer(w http.ResponseWriter, r *http.Request) error {
 }
 
 func Event(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-	b, err := ioutil.ReadAll(r.Body)
+	p, err := vonage.ParseVoiceEventRequest(r)
 	if err != nil {
-		return fmt.Errorf("event request: %v", err)
-	}
-	var p vonage.VoiceEventRequest
-	if err = json.Unmarshal(b, &p); err != nil {
 		return &httpError{
 			Code: http.StatusBadRequest,
-			Err:  fmt.Errorf("event request: %w", err),
+			Err:  fmt.Errorf("answer request: %w", err),
 		}
 	}
 
-	log.Printf("event: %v", p)
+	log.Printf("event: %+v", p)
 	return nil
 }
 
