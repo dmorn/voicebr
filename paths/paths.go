@@ -5,12 +5,30 @@
 // path, we can add the logic here.
 package paths
 
-// Path to user preferences, such as NCCOs.
+import "path/filepath"
+
+var RootDir func() string
+
+func rootDir() string {
+	if f := RootDir; f != nil {
+		return f()
+	}
+	return defaultRootDir()
+}
+
+// Path to user defined preferences.
 func PrefsPath() string {
-	return "var/lib/voicebr/prefs.hujson"
+	return filepath.Join(rootDir(), "voicebr.prefs.hujson")
 }
 
 // Path to Vonage's configuration.
 func VonageConfigPath() string {
-	return "var/lib/voicebr/vonage.hujson"
+	return filepath.Join(rootDir(), "vonage.config.hujson")
+}
+
+// Path to the file that holds the server's
+// pid. The server will not start unless the file
+// is deleted.
+func ServerPidPath() string {
+	return filepath.Join(rootDir(), "server.pid")
 }
