@@ -8,7 +8,7 @@ import (
 	"github.com/jecoz/voicebr/vonage"
 )
 
-func AllowBroadcastFrom(caller string) bool {
+func AllowBroadcastFrom(from string) bool {
 	// TODO(jecoz): load preferences and caller whitelist.
 	return true
 }
