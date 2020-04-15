@@ -18,6 +18,8 @@ type Prefs struct {
 	Broadcasters []string
 	// Message told to the caller before the recording starts.
 	BroadcastGreetMsg string
+	ExternalOrigin    string
+	Port              int
 }
 
 func WritePrefs(w io.Writer, p *Prefs) error {

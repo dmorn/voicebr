@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jecoz/callrelay/vonage"
 	"github.com/jecoz/callrelay"
+	"github.com/jecoz/callrelay/vonage"
 )
 
 // RecordHandler is an "answer" webhook which tells Vonage to record the call.

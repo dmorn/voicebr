@@ -7,8 +7,8 @@ import (
 	"os/signal"
 
 	"github.com/jecoz/callrelay"
-	"github.com/jecoz/callrelay/vonage"
 	"github.com/jecoz/callrelay/enginevonage"
+	"github.com/jecoz/callrelay/vonage"
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 
 	// Instantiate the Vonage engine.
 	ev := enginevonage.Engine{
-		Prefs: &p,
+		Prefs:  &p,
 		Config: &c,
 	}
 

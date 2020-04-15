@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
-	"github.com/jecoz/callrelay/vonage"
 	"github.com/jecoz/callrelay"
+	"github.com/jecoz/callrelay/vonage"
 )
 
 type httpError struct {
@@ -47,16 +48,28 @@ func (h ReturnHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type Engine struct {
-	Prefs *callrelay.Prefs
+	Prefs  *callrelay.Prefs
 	Config *vonage.Config
 }
 
 func (e *Engine) Run(ctx context.Context) error {
-	addr := ":8080"
-	mux := vonage.NewVoiceWebhookMux(&vonage.VoiceWebhook{
-		Answer: NewRecordHandlerFunc("TODO", e.Prefs, e.Config),
+	addr := fmt.Sprintf(":%d", e.Prefs.Port)
+	callback := fmt.Sprintf("%v:%d/voice/broadcast/event", e.Prefs.ExternalOrigin, e.Prefs.Port)
+	curl, err := url.Parse(callback)
+	if err != nil {
+		return fmt.Errorf("engine run: %w", err)
+	}
+
+	recMux := vonage.NewVoiceWebhookMux(&vonage.VoiceWebhook{
+		Answer: NewRecordHandlerFunc(curl.String(), e.Prefs, e.Config),
 		Event:  ReturnHandlerFunc(Event),
 	})
+	brMux := vonage.NewVoiceWebhookMux(vonage.NewWebook())
+
+	mux := http.NewServeMux()
+	mux.Handle("/voice/record/", http.StripPrefix("/voice/record", recMux))
+	mux.Handle("/voice/broadcast/", http.StripPrefix("/voice/broadcast", brMux))
+
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: mux,
@@ -71,7 +84,7 @@ func (e *Engine) Run(ctx context.Context) error {
 	}()
 
 	log.Printf("server listening on addr: %v", addr)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("engine run: %w", err)
 	}
