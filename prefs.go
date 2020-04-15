@@ -1,4 +1,4 @@
-package voicebr
+package callrelay
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 )
 
 // Prefs are the user modifiable preferences
-// of the voicebr server.
+// of the callrelay server.
 type Prefs struct {
 	// List of callers that are allowed to initiate
 	// broadcast requests.

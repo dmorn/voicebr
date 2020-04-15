@@ -1,5 +1,5 @@
 package paths
 
 func RootDir() string {
-	return "/var/lib/voicebr"
+	return "/var/lib/callrelay"
 }

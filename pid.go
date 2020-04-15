@@ -1,4 +1,4 @@
-package voicebr
+package callrelay
 
 import (
 	"bufio"

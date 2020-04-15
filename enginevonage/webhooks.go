@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jecoz/voicebr/vonage"
+	"github.com/jecoz/callrelay/vonage"
 )
 
 func AllowBroadcastFrom(from string) bool {

@@ -1,8 +1,8 @@
 package main
 
 import "os"
-import "github.com/jecoz/voicebr"
+import "github.com/jecoz/callrelay"
 
 func main() {
-	voicebr.WritePrefs(os.Stdout, new(voicebr.Prefs))
+	callrelay.WritePrefs(os.Stdout, new(callrelay.Prefs))
 }

@@ -1,4 +1,4 @@
-module github.com/jecoz/voicebr
+module github.com/jecoz/callrelay
 
 go 1.14
 

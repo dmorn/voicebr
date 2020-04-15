@@ -18,7 +18,7 @@ func rootDir() string {
 
 // Path to user defined preferences.
 func PrefsPath() string {
-	return filepath.Join(rootDir(), "voicebr.prefs.hujson")
+	return filepath.Join(rootDir(), "callrelay.prefs.hujson")
 }
 
 // Path to Vonage's configuration.

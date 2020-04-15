@@ -1,5 +1,5 @@
 package paths
 
 func defaultRootDir() string {
-	return "/usr/local/etc/voicebr"
+	return "/usr/local/etc/callrelay"
 }

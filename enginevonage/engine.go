@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jecoz/voicebr/vonage"
+	"github.com/jecoz/callrelay/vonage"
 )
 
 type httpError struct {
