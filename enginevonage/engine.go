@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jecoz/callrelay/vonage"
+	"github.com/jecoz/callrelay"
 )
 
 type httpError struct {
@@ -37,6 +38,7 @@ func Error(w http.ResponseWriter, err error) {
 // 500 should be used for the other cases.
 type ReturnHandlerFunc func(w http.ResponseWriter, r *http.Request) error
 
+// Implementation of http.Handler.
 func (h ReturnHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := h(w, r); err != nil {
 		Error(w, err)
@@ -45,16 +47,14 @@ func (h ReturnHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type Engine struct {
-}
-
-func New() *Engine {
-	return new(Engine)
+	Prefs *callrelay.Prefs
+	Config *vonage.Config
 }
 
 func (e *Engine) Run(ctx context.Context) error {
 	addr := ":8080"
 	mux := vonage.NewVoiceWebhookMux(&vonage.VoiceWebhook{
-		Answer: ReturnHandlerFunc(Answer),
+		Answer: NewRecordHandlerFunc("TODO", e.Prefs, e.Config),
 		Event:  ReturnHandlerFunc(Event),
 	})
 	srv := &http.Server{
@@ -69,6 +69,7 @@ func (e *Engine) Run(ctx context.Context) error {
 
 		done <- srv.Shutdown(ctx)
 	}()
+
 	log.Printf("server listening on addr: %v", addr)
 	err := srv.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
