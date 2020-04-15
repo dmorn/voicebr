@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/tailscale/hujson"
 )
@@ -15,10 +16,8 @@ type Prefs struct {
 	// List of callers that are allowed to initiate
 	// broadcast requests.
 	Broadcasters []string
-	// The language spoken in the text to speech messages.
-	LanguageCode string
 	// Message told to the caller before the recording starts.
-	BroadcastStartMessage string
+	BroadcastGreetMsg string
 }
 
 func WritePrefs(w io.Writer, p *Prefs) error {
