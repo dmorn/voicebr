@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"io"
+	"os"
 
 	"github.com/jecoz/voiley"
 	"github.com/jecoz/voiley/vonage"
@@ -47,11 +49,12 @@ func (a *RecordHandler) ServeHTTPReturn(w http.ResponseWriter, r *http.Request) 
 
 	nccos := []interface{}{}
 	if msg := a.BroadcastGreetMsg; msg != "" {
-		//nccos = append(nccos, vonage.NewTalkControl(a.VoiceName, msg))
+		nccos = append(nccos, vonage.NewTalkControl(a.VoiceName, msg))
 	}
 	nccos = append(nccos, vonage.NewRecordControl(a.RecordCallbackURL))
 
-	if err = vonage.NewEncoder(w).EncodeControls(nccos...); err != nil {
+	mw := io.MultiWriter(w, os.Stderr)
+	if err = vonage.NewEncoder(mw).EncodeControls(nccos...); err != nil {
 		return fmt.Errorf("answer response: %w", err)
 	}
 	return nil
@@ -63,7 +66,7 @@ func NewRecordHandlerFunc(callback string, c *vonage.Config, p *voiley.Prefs) Re
 }
 
 func Event(w http.ResponseWriter, r *http.Request) error {
-	p, err := vonage.ParseVoiceEventRequest(r)
+	_, err := vonage.ParseVoiceEventRequest(r)
 	if err != nil {
 		return &httpError{
 			Code: http.StatusBadRequest,
@@ -71,6 +74,6 @@ func Event(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	log.Printf("event: %+v", p)
+	// log.Printf("event: %+v", p)
 	return nil
 }

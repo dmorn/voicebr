@@ -56,29 +56,31 @@ type Engine struct {
 
 func (e *Engine) Run(ctx context.Context) error {
 	addr := fmt.Sprintf(":%d", e.Prefs.Port)
-	callback := fmt.Sprintf("%v:%d/voice/broadcast/event", e.Prefs.ExternalOrigin, e.Prefs.Port)
-	cbk, err := url.Parse(callback)
+	callback, err := url.Parse(fmt.Sprintf(
+		"%v/voice/broadcast/events",
+		e.Prefs.ExternalOrigin,
+	))
 	if err != nil {
 		return fmt.Errorf("engine run: %w", err)
 	}
 
-	recMux := vonage.NewVoiceWebhookMux(&vonage.VoiceWebhook{
-		Answer: NewRecordHandlerFunc(cbk.String(), e.Config, e.Prefs),
+	rec := vonage.NewVoiceWebhookMux(&vonage.VoiceWebhook{
+		Answer: NewRecordHandlerFunc(callback.String(), e.Config, e.Prefs),
 		Event:  ReturnHandlerFunc(Event),
 	})
-	brwh := vonage.NewWebook()
-	brwh.Event = ReturnHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {
+	brh := vonage.NewWebook()
+	brh.Event = ReturnHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {
 		log.Printf("recording received: %v", r)
 		defer r.Body.Close()
 		io.Copy(ioutil.Discard, r.Body)
 		w.WriteHeader(http.StatusOK)
 		return nil
 	})
-	brMux := vonage.NewVoiceWebhookMux(brwh)
+	br := vonage.NewVoiceWebhookMux(brh)
 
 	mux := http.NewServeMux()
-	mux.Handle("/voice/record/", http.StripPrefix("/voice/record", recMux))
-	mux.Handle("/voice/broadcast/", http.StripPrefix("/voice/broadcast", brMux))
+	mux.Handle("/voice/record/", http.StripPrefix("/voice/record", rec))
+	mux.Handle("/voice/broadcast/", http.StripPrefix("/voice/broadcast", br))
 
 	srv := &http.Server{
 		Addr:    addr,
@@ -93,7 +95,7 @@ func (e *Engine) Run(ctx context.Context) error {
 		done <- srv.Shutdown(ctx)
 	}()
 
-	log.Printf("server listening on addr: %v", addr)
+	log.Printf("vonage hook server listening on addr: %v", addr)
 	err = srv.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("engine run: %w", err)
