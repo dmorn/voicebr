@@ -119,7 +119,7 @@ func unmarshalRequest(i interface{}, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(i); err != nil {
 		// Discard the remaining bytes.
 		io.Copy(ioutil.Discard, r.Body)
-		fmt.Errorf("unmarshal request: %w", err)
+		return fmt.Errorf("unmarshal request: %w", err)
 	}
 	return nil
 }

@@ -6,9 +6,9 @@ import (
 )
 
 type TalkControl struct {
-	Action    string `json:"action"`
-	Text      string `json:"text"`
-	VoiceName string `json:"voice_name"`
+	Action    string `json:"action,omitempty"`
+	Text      string `json:"text,omitempty"`
+	VoiceName string `json:"voice_name,omitempty"`
 }
 
 func NewTalkControl(voiceName, text string) *TalkControl {
@@ -20,19 +20,19 @@ func NewTalkControl(voiceName, text string) *TalkControl {
 }
 
 type RecordControl struct {
-	Action      string   `json:"action"`
-	Format      string   `json:"format"`
-	Timeout     int      `json:"timeout"`
-	BeepStart   bool     `json:"beepStart"`
-	EventURL    []string `json:"eventUrl"`
-	EventMethod string   `json:"eventMethod"`
+	Action      string   `json:"action,omitempty"`
+	Format      string   `json:"format,omitempty"`
+	Timeout     int      `json:"timeout,omitempty"`
+	BeepStart   bool     `json:"beepStart,omitempty"`
+	EventURL    []string `json:"eventUrl,omitempty"`
+	EventMethod string   `json:"eventMethod,omitempty"`
 }
 
 func NewRecordControl(url string) *RecordControl {
 	return &RecordControl{
-		Action:      "record",
-		Format:      "mp3",
-		Timeout:     30,
+		Action: "record",
+		Format: "mp3",
+		//Timeout:     30,
 		BeepStart:   true,
 		EventURL:    []string{url},
 		EventMethod: "POST",
