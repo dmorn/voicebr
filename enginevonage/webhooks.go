@@ -5,17 +5,18 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jecoz/callrelay"
-	"github.com/jecoz/callrelay/vonage"
+	"github.com/jecoz/voiley"
+	"github.com/jecoz/voiley/vonage"
 )
 
 // RecordHandler is an "answer" webhook which tells Vonage to record the call.
 type RecordHandler struct {
-	*callrelay.Prefs
-	*vonage.Config
 	// When the record is completed, RecordCallbackURL is contacted with
 	// record data.
 	RecordCallbackURL string
+
+	*vonage.Config
+	*voiley.Prefs
 }
 
 func AllowBroadcastFrom(from string, broadcasters []string) bool {
@@ -46,7 +47,7 @@ func (a *RecordHandler) ServeHTTPReturn(w http.ResponseWriter, r *http.Request) 
 
 	nccos := []interface{}{}
 	if msg := a.BroadcastGreetMsg; msg != "" {
-		nccos = append(nccos, vonage.NewTalkControl(a.VoiceName, msg))
+		//nccos = append(nccos, vonage.NewTalkControl(a.VoiceName, msg))
 	}
 	nccos = append(nccos, vonage.NewRecordControl(a.RecordCallbackURL))
 
@@ -56,8 +57,8 @@ func (a *RecordHandler) ServeHTTPReturn(w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func NewRecordHandlerFunc(callback string, p *callrelay.Prefs, c *vonage.Config) ReturnHandlerFunc {
-	a := &RecordHandler{p, c, callback}
+func NewRecordHandlerFunc(callback string, c *vonage.Config, p *voiley.Prefs) ReturnHandlerFunc {
+	a := &RecordHandler{callback, c, p}
 	return a.ServeHTTPReturn
 }
 

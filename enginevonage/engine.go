@@ -4,13 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/jecoz/callrelay"
-	"github.com/jecoz/callrelay/vonage"
+	"github.com/jecoz/voiley"
+	"github.com/jecoz/voiley/vonage"
 )
 
 type httpError struct {
@@ -48,23 +50,31 @@ func (h ReturnHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type Engine struct {
-	Prefs  *callrelay.Prefs
+	Prefs  *voiley.Prefs
 	Config *vonage.Config
 }
 
 func (e *Engine) Run(ctx context.Context) error {
 	addr := fmt.Sprintf(":%d", e.Prefs.Port)
 	callback := fmt.Sprintf("%v:%d/voice/broadcast/event", e.Prefs.ExternalOrigin, e.Prefs.Port)
-	curl, err := url.Parse(callback)
+	cbk, err := url.Parse(callback)
 	if err != nil {
 		return fmt.Errorf("engine run: %w", err)
 	}
 
 	recMux := vonage.NewVoiceWebhookMux(&vonage.VoiceWebhook{
-		Answer: NewRecordHandlerFunc(curl.String(), e.Prefs, e.Config),
+		Answer: NewRecordHandlerFunc(cbk.String(), e.Config, e.Prefs),
 		Event:  ReturnHandlerFunc(Event),
 	})
-	brMux := vonage.NewVoiceWebhookMux(vonage.NewWebook())
+	brwh := vonage.NewWebook()
+	brwh.Event = ReturnHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {
+		log.Printf("recording received: %v", r)
+		defer r.Body.Close()
+		io.Copy(ioutil.Discard, r.Body)
+		w.WriteHeader(http.StatusOK)
+		return nil
+	})
+	brMux := vonage.NewVoiceWebhookMux(brwh)
 
 	mux := http.NewServeMux()
 	mux.Handle("/voice/record/", http.StripPrefix("/voice/record", recMux))
