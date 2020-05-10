@@ -1,4 +1,4 @@
-module github.com/jecoz/callrelay
+module github.com/jecoz/voiley
 
 go 1.14
 
