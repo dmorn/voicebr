@@ -52,7 +52,7 @@ func (p *MasterPrefs) Save(filename string) error {
 }
 
 func (p *MasterPrefs) Read(r io.Reader) error {
-	if err := hujson.NewDecoder(r).Decode(&p); err != nil {
+	if err := hujson.NewDecoder(r).Decode(p); err != nil {
 		return fmt.Errorf("read preferences: %w", err)
 	}
 	return nil
