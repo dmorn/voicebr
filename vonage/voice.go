@@ -103,8 +103,8 @@ func NewWebook() *VoiceWebhook {
 
 func NewVoiceWebhookMux(hook *VoiceWebhook) *http.ServeMux {
 	m := http.NewServeMux()
-	m.Handle("/answer", hook.Answer)
-	m.Handle("/event", hook.Event)
+	m.Handle("/answers", hook.Answer)
+	m.Handle("/events", hook.Event)
 	return m
 }
 

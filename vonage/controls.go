@@ -22,7 +22,7 @@ func NewTalkControl(voiceName, text string) *TalkControl {
 type RecordControl struct {
 	Action      string   `json:"action,omitempty"`
 	Format      string   `json:"format,omitempty"`
-	Timeout     int      `json:"timeout,omitempty"`
+	EndOnKey    string   `json:"endOnKey,omitempty"`
 	BeepStart   bool     `json:"beepStart,omitempty"`
 	EventURL    []string `json:"eventUrl,omitempty"`
 	EventMethod string   `json:"eventMethod,omitempty"`
@@ -30,10 +30,10 @@ type RecordControl struct {
 
 func NewRecordControl(url string) *RecordControl {
 	return &RecordControl{
-		Action: "record",
-		Format: "mp3",
-		//Timeout:     30,
+		Action:      "record",
+		Format:      "mp3",
 		BeepStart:   true,
+		EndOnKey:    "1",
 		EventURL:    []string{url},
 		EventMethod: "POST",
 	}
