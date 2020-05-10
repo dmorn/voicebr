@@ -1,4 +1,4 @@
-package voley
+package voiley
 
 import (
 	"encoding/json"
@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jecoz/voley/vonage"
+	"github.com/jecoz/voiley/vonage"
 	"github.com/tailscale/hujson"
 )
 
 // Prefs are the user modifiable preferences
-// of the voley server. It embeds also vonage's
+// of the voiley server. It embeds also vonage's
 // configuration, possibly in the future its alternative.
 type Prefs struct {
 	// List of callers that are allowed to initiate
@@ -25,7 +25,12 @@ type Prefs struct {
 	Vonage            *vonage.Config `json:"vonage"`
 }
 
-func (p *Prefs) Write(w io.Writer) error {
+type MasterPrefs struct {
+	Global *Prefs         `json:"global"`
+	Vonage *vonage.Config `json:"vonage"`
+}
+
+func (p *MasterPrefs) Write(w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "\t")
 	if err := enc.Encode(&p); err != nil {
@@ -34,7 +39,7 @@ func (p *Prefs) Write(w io.Writer) error {
 	return nil
 }
 
-func (p *Prefs) Save(filename string) error {
+func (p *MasterPrefs) Save(filename string) error {
 	if err := os.MkdirAll(filepath.Dir(filename), os.ModePerm); err != nil {
 		return fmt.Errorf("save preferences: %w", err)
 	}
@@ -46,14 +51,14 @@ func (p *Prefs) Save(filename string) error {
 	return p.Write(f)
 }
 
-func (p *Prefs) Read(r io.Reader) error {
+func (p *MasterPrefs) Read(r io.Reader) error {
 	if err := hujson.NewDecoder(r).Decode(&p); err != nil {
 		return fmt.Errorf("read preferences: %w", err)
 	}
 	return nil
 }
 
-func (p *Prefs) Load(filename string) error {
+func (p *MasterPrefs) Load(filename string) error {
 	f, err := os.Open(filename)
 	if err != nil {
 		return fmt.Errorf("load preferences: %w", err)
