@@ -25,7 +25,7 @@ type Prefs struct {
 	Vonage            *vonage.Config `json:"vonage"`
 }
 
-func WritePrefs(w io.Writer, p *Prefs) error {
+func (p *Prefs) Write(w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "\t")
 	if err := enc.Encode(&p); err != nil {
@@ -34,7 +34,7 @@ func WritePrefs(w io.Writer, p *Prefs) error {
 	return nil
 }
 
-func SavePrefs(filename string, p *Prefs) error {
+func (p *Prefs) Save(filename string) error {
 	if err := os.MkdirAll(filepath.Dir(filename), os.ModePerm); err != nil {
 		return fmt.Errorf("save preferences: %w", err)
 	}
@@ -43,21 +43,21 @@ func SavePrefs(filename string, p *Prefs) error {
 		return fmt.Errorf("save preferences: %w", err)
 	}
 	defer f.Close()
-	return WritePrefs(f, p)
+	return p.Write(f)
 }
 
-func ReadPrefs(r io.Reader, p *Prefs) error {
+func (p *Prefs) Read(r io.Reader) error {
 	if err := hujson.NewDecoder(r).Decode(&p); err != nil {
 		return fmt.Errorf("read preferences: %w", err)
 	}
 	return nil
 }
 
-func LoadPrefs(filename string, p *Prefs) error {
+func (p *Prefs) Load(filename string) error {
 	f, err := os.Open(filename)
 	if err != nil {
 		return fmt.Errorf("load preferences: %w", err)
 	}
 	defer f.Close()
-	return ReadPrefs(f, p)
+	return p.Read(f)
 }
