@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/jecoz/voley"
-	"github.com/jecoz/voley/enginevonage"
-	"github.com/jecoz/voley/vonage"
+	"github.com/jecoz/voiley"
+	"github.com/jecoz/voiley/enginevonage"
+	"github.com/jecoz/voiley/vonage"
 )
 
 func logf(format string, args ...interface{}) {
@@ -29,13 +29,13 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var p *voley.Prefs
+	var p *voiley.MasterPrefs
 	if err := p.Load(paths.Prefs()); err != nil {
 		exitf(1, err.Error())
 	}
 
 	// Instantiate the Vonage engine.
-	ev := enginevonage.Engine{Prefs: &p}
+	ev := enginevonage.Engine{Prefs: p.Global, Config: p.Vonage}
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
