@@ -7,8 +7,8 @@ import (
 	"os/signal"
 
 	"github.com/jecoz/voiley"
-	"github.com/jecoz/voiley/paths"
 	"github.com/jecoz/voiley/enginevonage"
+	"github.com/jecoz/voiley/paths"
 )
 
 func logf(format string, args ...interface{}) {
