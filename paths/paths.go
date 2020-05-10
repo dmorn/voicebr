@@ -7,7 +7,7 @@ import "path/filepath"
 
 var (
 	RootDir = rootDir
-	Prefs = prefs
+	Prefs   = prefs
 )
 
 func rootDir() string {
@@ -15,6 +15,5 @@ func rootDir() string {
 }
 
 func prefs() string {
-	return filepath.Join(RootDir(), "voleyprefs.hujson")
+	return filepath.Join(RootDir(), "voileyprefs.hujson")
 }
-
