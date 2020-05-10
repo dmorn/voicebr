@@ -1,4 +1,4 @@
-package callrelay
+package voley
 
 import (
 	"encoding/json"
@@ -7,19 +7,22 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jecoz/voley/vonage"
 	"github.com/tailscale/hujson"
 )
 
 // Prefs are the user modifiable preferences
-// of the callrelay server.
+// of the voley server. It embeds also vonage's
+// configuration, possibly in the future its alternative.
 type Prefs struct {
 	// List of callers that are allowed to initiate
 	// broadcast requests.
-	Broadcasters []string
+	Broadcasters []string `json:"broadcasters"`
 	// Message told to the caller before the recording starts.
-	BroadcastGreetMsg string
-	ExternalOrigin    string
-	Port              int
+	BroadcastGreetMsg string         `json:"broadcast_greet_msg"`
+	ExternalOrigin    string         `json:"external_origin"`
+	Port              int            `json:"port"`
+	Vonage            *vonage.Config `json:"vonage"`
 }
 
 func WritePrefs(w io.Writer, p *Prefs) error {
